@@ -20,6 +20,21 @@ O
 ```
 Where the uppercase letters represent elevators, and the lowercase letters map represent non-elevator switches that map to the elevator with that corresponding letter. Feel free to hotswap the mapping function in `user_mapper_function.py`. More details about how to do that in the file.
 
+
+To run booksim, and use our test script which defines VC, topology, router, etc.
+```
+cd src/
+make clean
+make
+#single test for a normal pattern
+./booksim examples/unitorus_3d_test_2
+#run our sweep and get throughput/latency ressults, configurations addjustable in sweep
+chmod +x sweep_unitorus.sh
+./sweep_unitorus
+#generate graphs:
+python3 plot.py
+```
+
 Network Details
 ===============
 The current implementation uses a DOR router and a {Unidirectional Torus or Bidirectional Mesh}. Here are visualizations of the individual nodes (with elevator and without) for a Unidirectional Mesh:
