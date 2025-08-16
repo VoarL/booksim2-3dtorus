@@ -59,12 +59,17 @@ BookSimConfig::BookSimConfig( )
   AddStrField( "dim_latency", "" );    // per-dimension latency (comma-separated)
   AddStrField( "dim_penalty", "" );    // per-dimension penalty (comma-separated)
   _int_map["unitorus_debug"] = 0;      // enable debug output for UniTorus
-  
+  AddStrField( "elevator_mapping_coords", "" );
   AddStrField( "routing_function", "none" );
+  AddStrField( "vertical_topology", "mesh" );
+  _int_map["enable_shadow_registers"] = 1;
+  _int_map["shadow_register_depth"] = 4;
 
   //simulator tries to correclty adjust latency for node/router placement 
   _int_map["use_noc_latency"] = 1;
 
+  _int_map["single_packet_source"] = 0;  // Default source node
+  _int_map["single_packet_dest"] = 1;    // Default destination node
 
   //used for noc latency calcualtion for network with concentration
   _int_map["x"] = 8; //number of routers in X

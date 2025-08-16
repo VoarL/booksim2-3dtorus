@@ -62,6 +62,20 @@ public:
   virtual int dest(int source);
 };
 
+class SinglePacketTrafficPattern : public TrafficPattern
+{
+private:
+  int _source;
+  int _destination;
+  bool _sent;
+
+public:
+  SinglePacketTrafficPattern(int nodes, int source, int dest);
+  virtual int dest(int source);
+  virtual void reset();
+};
+
+
 class TransposeTrafficPattern : public BitPermutationTrafficPattern {
 protected:
   int _shift;

@@ -55,6 +55,10 @@ extern std::vector<float> gDimPenalties;
 // Global dimension bandwidths for routing cost calculation  
 extern std::vector<int> gDimBandwidths;
 
+extern std::vector<std::vector<int>> gElevatorMapping;
+
+extern std::string gVerticalTopology;
+
 extern bool gTrace;
 
 extern std::ostream * gWatchOut;

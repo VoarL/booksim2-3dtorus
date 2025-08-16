@@ -669,13 +669,17 @@ void TrafficManager::_RetireFlit( Flit *f, int dest )
         err << "Flit " << f->id << " arrived at incorrect output " << dest;
         Error( err.str( ) );
     }
-  
-    if((_slowest_flit[f->cl] < 0) ||
-       (_flat_stats[f->cl]->Max() < (f->atime - f->itime)))
-        _slowest_flit[f->cl] = f->id;
-    _flat_stats[f->cl]->AddSample( f->atime - f->itime);
-    if(_pair_stats){
-        _pair_flat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - f->itime );
+    
+    bool is_self_loop_flit = (f->src == dest);
+
+    if (!is_self_loop_flit) {
+        if((_slowest_flit[f->cl] < 0) ||
+        (_flat_stats[f->cl]->Max() < (f->atime - f->itime)))
+            _slowest_flit[f->cl] = f->id;
+        _flat_stats[f->cl]->AddSample( f->atime - f->itime);
+        if(_pair_stats){
+            _pair_flat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - f->itime );
+        }
     }
       
     if ( f->tail ) {
@@ -723,19 +727,27 @@ void TrafficManager::_RetireFlit( Flit *f, int dest )
         // and based on the simulation state
         if ( ( _sim_state == warming_up ) || f->record ) {
       
-            _hop_stats[f->cl]->AddSample( f->hops );
+            // FILTER OUT SELF-LOOP PACKETS
+            bool is_self_loop = (head->src == dest);
 
-            if((_slowest_packet[f->cl] < 0) ||
-               (_plat_stats[f->cl]->Max() < (f->atime - head->itime)))
-                _slowest_packet[f->cl] = f->pid;
-            _plat_stats[f->cl]->AddSample( f->atime - head->ctime);
-            _nlat_stats[f->cl]->AddSample( f->atime - head->itime);
-            _frag_stats[f->cl]->AddSample( (f->atime - head->atime) - (f->id - head->id) );
-   
-            if(_pair_stats){
-                _pair_plat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - head->ctime );
-                _pair_nlat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - head->itime );
+            // Only add to statistics if NOT a self-loop
+            if (!is_self_loop) {
+                _hop_stats[f->cl]->AddSample( f->hops );
+
+                if((_slowest_packet[f->cl] < 0) ||
+                (_plat_stats[f->cl]->Max() < (f->atime - head->itime)))
+                    _slowest_packet[f->cl] = f->pid;
+                _plat_stats[f->cl]->AddSample( f->atime - head->ctime);
+                _nlat_stats[f->cl]->AddSample( f->atime - head->itime);
+                _frag_stats[f->cl]->AddSample( (f->atime - head->atime) - (f->id - head->id) );
+
+                if(_pair_stats){
+                    _pair_plat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - head->ctime );
+                    _pair_nlat[f->cl][f->src*_nodes+dest]->AddSample( f->atime - head->itime );
+                }
             }
+            // If self-loop: statistics collection is skipped entirely
+
         }
     
         if(f != head) {

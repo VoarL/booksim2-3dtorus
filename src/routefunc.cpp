@@ -53,7 +53,6 @@
 
 
 map<string, tRoutingFunction> gRoutingFunctionMap;
-
 /* Global information used by routing functions */
 
 int gNumVCs;
@@ -1914,6 +1913,191 @@ void chaos_mesh( const Router *r, const Flit *f,
 
 //=============================================================
 
+// 3D routing for unidirectional 2D torus + vertical mesh with elevators
+// Z-first priority: route to elevator if Z doesn't match, otherwise normal 2D routing
+
+void dim_order_3d_elevator_unitorus(const Router *r, const Flit *f, int in_channel, 
+                                   OutputSet *outputs, bool inject)
+{
+  if (gElevatorMapping.empty()) {
+      cerr << "ERROR: gElevatorMapping is empty!" << endl;
+      // Fallback behavior
+  }
+  
+  int vcBegin = 0, vcEnd = gNumVCs-1;
+  if (f->type == Flit::READ_REQUEST) {
+    vcBegin = gReadReqBeginVC;
+    vcEnd = gReadReqEndVC;
+  } else if (f->type == Flit::WRITE_REQUEST) {
+    vcBegin = gWriteReqBeginVC;
+    vcEnd = gWriteReqEndVC;
+  } else if (f->type == Flit::READ_REPLY) {
+    vcBegin = gReadReplyBeginVC;
+    vcEnd = gReadReplyEndVC;
+  } else if (f->type == Flit::WRITE_REPLY) {
+    vcBegin = gWriteReplyBeginVC;
+    vcEnd = gWriteReplyEndVC;
+  }
+  assert(((f->vc >= vcBegin) && (f->vc <= vcEnd)) || (inject && (f->vc < 0)));
+  int out_port;
+
+  if(inject) {
+    out_port = -1;
+  } else {
+    int cur = r->GetID();
+    int dest = f->dest;
+    bool is_vertical_mesh = (gVerticalTopology == "mesh");
+    bool use_single_z_port = (!is_vertical_mesh) || (gDimSizes[2] <= 2);
+    if (cur == dest) {
+      // Check if we're using 5-port (mesh) or 4-port (torus) system
+      out_port = r->NumOutputs() - 1; // PE is always the last port
+    } else {
+      vector<int> cur_coords = NodeToCoords3D(cur);
+      vector<int> dest_coords = NodeToCoords3D(dest);
+      
+      if (cur_coords[2] != dest_coords[2]) {
+        vector<int> elevator_coords = GetNearestElevator(cur);
+        //cout << "Node " << cur << " coords(" << cur_coords[0] << "," << cur_coords[1] << "," << cur_coords[2] << ") maps to elevator (" << elevator_coords[0] << "," << elevator_coords[1] << ")" << endl;
+        if (cur_coords[0] == elevator_coords[0] && cur_coords[1] == elevator_coords[1]) { // At elevator - choose up or down port
+          if (r->NumOutputs() == 5) { // This router has separate Z-up and Z-down ports (middle layer)
+            if (cur_coords[2] < dest_coords[2]) {
+              out_port = 2; // Z-up
+            } else {
+              out_port = 3; // Z-down
+            }
+          } else {
+            out_port = 2; // This router has only one Z port (top/bottom layer)
+          }
+        } else {
+          // Not at elevator - route to elevator using X,Y
+          out_port = Route2D_ToElevator(cur_coords, elevator_coords, vcBegin, vcEnd);
+        }
+      } else {
+        // Z matches - do 2D X,Y routing
+        out_port = Route2D_ToDestination(cur_coords, dest_coords, vcBegin, vcEnd);
+      }
+    }
+  }
+
+  outputs->Clear();
+  outputs->AddRange(out_port, vcBegin, vcEnd);
+}
+
+// Convert node ID to 3D coordinates using consistent method
+vector<int> NodeToCoords3D(int node)
+{
+  vector<int> coords(3); // X, Y, Z
+  
+  // Assuming gDimSizes[0] = X_size, gDimSizes[1] = Y_size, gDimSizes[2] = Z_size
+  coords[0] = node % gDimSizes[0];                    // X coordinate
+  coords[1] = (node / gDimSizes[0]) % gDimSizes[1];   // Y coordinate  
+  coords[2] = node / (gDimSizes[0] * gDimSizes[1]);   // Z coordinate
+  
+  return coords;
+}
+
+// Get nearest elevator coordinates for current node
+// This will be populated from config file parser
+vector<int> GetNearestElevator(int node)
+{
+    vector<int> coords = NodeToCoords3D(node);
+    int grid_pos = coords[1] * gDimSizes[0] + coords[0]; // y * width + x
+    
+    if (grid_pos < (int)gElevatorMapping.size()) {
+        return gElevatorMapping[grid_pos];
+    }
+    cout << "going to fallback" << endl;
+    // Fallback: return node's own X,Y coordinates
+    return {coords[0], coords[1]};
+}
+
+// 2D dimension-order routing to elevator coordinates
+int Route2D_ToElevator(const vector<int>& cur_coords, const vector<int>& elevator_coords,
+                      int& vcBegin, int& vcEnd)
+{
+  // X-first dimension order (unidirectional torus)
+  if (cur_coords[0] != elevator_coords[0]) {
+    // Route in X dimension
+    return Route_X_Dimension(cur_coords[0], elevator_coords[0], vcBegin, vcEnd);
+  } else if (cur_coords[1] != elevator_coords[1]) {
+    // Route in Y dimension  
+    return Route_Y_Dimension(cur_coords[1], elevator_coords[1], vcBegin, vcEnd);
+  }
+  
+  // Should not reach here if elevator coords are different
+  return -1;
+}
+
+// 2D dimension-order routing to final destination
+int Route2D_ToDestination(const vector<int>& cur_coords, const vector<int>& dest_coords,
+                         int& vcBegin, int& vcEnd)
+{
+  // X-first dimension order (unidirectional torus)
+  if (cur_coords[0] != dest_coords[0]) {
+    // Route in X dimension
+    return Route_X_Dimension(cur_coords[0], dest_coords[0], vcBegin, vcEnd);
+  } else if (cur_coords[1] != dest_coords[1]) {
+    // Route in Y dimension
+    return Route_Y_Dimension(cur_coords[1], dest_coords[1], vcBegin, vcEnd);
+  }
+  
+  // Should not reach here if destination is different
+  return -1;
+}
+
+// Route in X dimension with VC partitioning for wraparound
+int Route_X_Dimension(int cur_x, int dest_x, int& vcBegin, int& vcEnd)
+{
+  int out_port = 0; // East port
+  
+  // Calculate distance with modulo for torus wraparound  
+  int direct_dist = (dest_x - cur_x + gDimSizes[0]) % gDimSizes[0];
+  int wrap_dist = gDimSizes[0] - direct_dist;
+  
+  // For DOR torus, VC partitioning is optional (deadlock-free without it)
+  /*int total_vcs = vcEnd - vcBegin + 1;
+  if (total_vcs >= 2) {
+    // Use VC partitioning if multiple VCs available
+    if (direct_dist <= wrap_dist) {
+      vcEnd = vcBegin + total_vcs / 2 - 1;
+    } else {
+      vcBegin = vcBegin + (total_vcs + 1) / 2;
+    }
+  }
+  // If only 1 VC, leave vcBegin/vcEnd unchanged (use all available VCs)
+  */
+  return out_port;
+}
+
+// Route in Y dimension with VC partitioning for wraparound  
+int Route_Y_Dimension(int cur_y, int dest_y, int& vcBegin, int& vcEnd)
+{
+  int out_port = 1; // South port
+  
+  // Calculate distance with modulo for torus wraparound  
+  int direct_dist = (dest_y - cur_y + gDimSizes[1]) % gDimSizes[1];
+  int wrap_dist = gDimSizes[1] - direct_dist;
+  /*// For DOR torus, VC partitioning is optional (deadlock-free without it)
+  int total_vcs = vcEnd - vcBegin + 1;
+  if (total_vcs >= 2) {
+    // Use VC partitioning if multiple VCs available
+    if (direct_dist <= wrap_dist) {
+      vcEnd = vcBegin + total_vcs / 2 - 1;
+    } else {
+      vcBegin = vcBegin + (total_vcs + 1) / 2;
+    }
+  }*/
+  // If only 1 VC, leave vcBegin/vcEnd unchanged (use all available VCs)
+  
+  return out_port;
+}
+
+
+
+
+//=============================================================
+
+
 void dim_order_unitorus( const Router *r, const Flit *f, int in_channel, 
                          OutputSet *outputs, bool inject )
 {
@@ -2084,6 +2268,9 @@ void InitializeRoutingMap( const Configuration & config )
   gRoutingFunctionMap["adaptive_xy_yx_mesh"]          = &adaptive_xy_yx_mesh;
   // End Balfour-Schultz
   // ===================================================
+
+  gRoutingFunctionMap["dim_order_3d_elevator_unitorus"] = &dim_order_3d_elevator_unitorus;
+  gRoutingFunctionMap["dim_order_unitorus"] = &dim_order_unitorus;
 
   gRoutingFunctionMap["dim_order_mesh"]  = &dim_order_mesh;
   gRoutingFunctionMap["dim_order_ni_mesh"]  = &dim_order_ni_mesh;

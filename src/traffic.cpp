@@ -67,6 +67,30 @@ TrafficPattern * TrafficPattern::New(string const & pattern, int nodes,
   TrafficPattern * result = NULL;
   if(pattern_name == "bitcomp") {
     result = new BitCompTrafficPattern(nodes);
+  } else if(pattern_name == "single_packet") {
+    // Read source and destination from config file
+    int source = config->GetInt("single_packet_source");
+    int dest = config->GetInt("single_packet_dest");
+
+    // Validate the values
+    if (source < 0 || source >= nodes) {
+        cout << "Error: Invalid single_packet_source: " << source 
+            << ". Must be between 0 and " << (nodes-1) << endl;
+        exit(-1);
+    }
+    if (dest < 0 || dest >= nodes) {
+        cout << "Error: Invalid single_packet_dest: " << dest 
+            << ". Must be between 0 and " << (nodes-1) << endl;
+        exit(-1);
+    }
+    if (source == dest) {
+        cout << "Error: single_packet_source and single_packet_dest cannot be the same" << endl;
+        exit(-1);
+    }
+
+    cout << "Single packet traffic: Node " << source << " -> Node " << dest << endl;
+    result = new SinglePacketTrafficPattern(nodes, source, dest);
+  
   } else if(pattern_name == "transpose") {
     result = new TransposeTrafficPattern(nodes);
   } else if(pattern_name == "bitrev") {
@@ -226,6 +250,29 @@ int BitCompTrafficPattern::dest(int source)
   int const mask = _nodes - 1;
   return ~source & mask;
 }
+
+SinglePacketTrafficPattern::SinglePacketTrafficPattern(int nodes, int source, int dest)
+  : TrafficPattern(nodes), _source(source), _destination(dest), _sent(false)
+{
+  assert((source >= 0) && (source < nodes));
+  assert((dest >= 0) && (dest < nodes));
+}
+
+int SinglePacketTrafficPattern::dest(int source)
+{
+  // Only allow the specific source to send to specific destination
+  if(source == _source) {
+    return _destination;
+  }
+  // All other nodes send to themselves (no traffic)
+  return source;
+}
+
+void SinglePacketTrafficPattern::reset()
+{
+  _sent = false;
+}
+
 
 TransposeTrafficPattern::TransposeTrafficPattern(int nodes)
   : BitPermutationTrafficPattern(nodes), _shift(0)

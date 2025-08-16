@@ -14,6 +14,8 @@ class UniTorus : public Network {
   vector<int> _dim_bandwidth;
   vector<int> _dim_latency;
   vector<float> _dim_penalty;
+  vector<vector<int>> _nearest_elevator; 
+  string _vertical_topology;
   
   // Debug flag
   bool _debug;
@@ -21,6 +23,7 @@ class UniTorus : public Network {
   void _ComputeSize( const Configuration &config );
   void _BuildNet( const Configuration &config );
   void _ParseDirectionConfig( const Configuration &config );
+  void _ParseElevatorMapping( const string& mapping_str );
 
   // Unidirectional helper functions (only positive direction)
   int _NextChannel( int node, int dim );
@@ -33,6 +36,8 @@ class UniTorus : public Network {
 public:
   UniTorus( const Configuration &config, const string & name );
   static void RegisterRoutingFunctions();
+
+  const vector<vector<int>>& GetNearestElevatorMapping() const;
 
   int GetN( ) const;
   int GetDimSize( int dim ) const;

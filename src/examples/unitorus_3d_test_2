@@ -1,0 +1,50 @@
+// Test configuration for 3D Unidirectional Torus
+// 4x3x2 torus with different properties per dimension
+
+// Topology
+topology = unitorus;
+dim_sizes = {3,3,3};       // 4x3x2 torus
+
+// Direction-specific configuration
+dim_bandwidth = {1,1,1};   // Dim 0: 3x, Dim 1: 2x, Dim 2: 1x bandwidth
+dim_latency = {1,1,10};     // Dim 0: 1 cycle, Dim 1: 2 cycles, Dim 2: 3 cycles
+dim_penalty = {0,2,5};     // Dim 0: no penalty, Dim 1: 2 cycles, Dim 2: 5 cycles
+
+// Routing
+routing_function = dim_order_3d_elevator;
+
+// Flow control
+num_vcs = 8;
+vc_buf_size = 4; 
+wait_for_tail_credit = 1;
+
+// Router architecture
+
+// 3d mappings
+elevator_mapping_coords = {0,0,2,0,2,0,1,1,0,1,2,1,0,1,2,1,0,2};
+//elevator_mapping_coords = {0,0,2,0,2,0,1,1,0,1,2,1,0,1,2,1,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+vertical_topology = mesh;  // mesh or "torus"
+enable_shadow_registers = 1;
+shadow_register_depth = 4;
+unitorus_debug = 1;
+sw_allocator = dor_allocator;
+
+// Traffic
+traffic = uniform;
+injection_rate = 0.1;
+//traffic = single_packet;
+single_packet_source = 1;
+single_packet_dest = 18;
+
+// === Packet and Flit ===
+packet_size = 1;
+
+// === Simulation Control ===
+sim_count = 1;
+
+// Simulation
+sim_type = latency;
+warmup_periods = 0;
+sample_period = 20;
+max_samples = 100;
+print_activity = 0;

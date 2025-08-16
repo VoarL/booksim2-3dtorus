@@ -48,5 +48,17 @@ extern int gWriteReplyBeginVC, gWriteReplyEndVC;
 // Unidirectional torus routing function
 void dim_order_unitorus( const Router *r, const Flit *f, int in_channel, 
                          OutputSet *outputs, bool inject );
+void dim_order_3d_elevator_unitorus(const Router *r, const Flit *f, 
+                                   int in_channel, OutputSet* outputs, bool inject);
+
+// Helper function declarations  
+vector<int> NodeToCoords3D(int node);
+vector<int> GetNearestElevator(int node);
+int Route2D_ToElevator(const vector<int>& cur_coords, const vector<int>& elevator_coords,
+                      int& vcBegin, int& vcEnd);
+int Route2D_ToDestination(const vector<int>& cur_coords, const vector<int>& dest_coords,
+                         int& vcBegin, int& vcEnd);
+int Route_X_Dimension(int cur_x, int dest_x, int& vcBegin, int& vcEnd);
+int Route_Y_Dimension(int cur_y, int dest_y, int& vcBegin, int& vcEnd);
 
 #endif

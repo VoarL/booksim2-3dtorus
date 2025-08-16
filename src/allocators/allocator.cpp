@@ -36,6 +36,7 @@
 #include "maxsize.hpp"
 #include "pim.hpp"
 #include "islip.hpp"
+#include "dor_allocator.hpp"
 #include "loa.hpp"
 #include "wavefront.hpp"
 #include "selalloc.hpp"
@@ -452,6 +453,8 @@ Allocator *Allocator::NewAllocator( Module *parent, const string& name,
   } else if ( alloc_name == "islip" ) {
     int iters = param_str.empty() ? (config ? config->GetInt("alloc_iters") : 1) : atoi(param_str.c_str());
     a = new iSLIP_Sparse( parent, name, inputs, outputs, iters );
+  } else if (alloc_name == "dor_allocator") {
+    a = new DORAllocator(parent, name, inputs, outputs);
   } else if ( alloc_name == "loa" ) {
     a = new LOA( parent, name, inputs, outputs );
   } else if ( alloc_name == "wavefront" ) {

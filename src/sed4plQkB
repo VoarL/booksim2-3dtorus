@@ -1,0 +1,44 @@
+//Base configuration for unitorus sweeps
+//Parameters will be modified by sweep script
+
+//Topology
+topology = unitorus;
+dim_sizes = {3,3,3};       
+
+//Direction-specific configuration
+dim_bandwidth = {1,1,1};   
+dim_latency = {1,1,10};     
+dim_penalty = {0,2,5};     
+
+//Routing
+routing_function = dim_order_3d_elevator;
+
+//Flow control - will be modified by script
+num_vcs = 8;
+vc_buf_size = 4; 
+wait_for_tail_credit = 1;
+
+//Router architecture
+sw_allocator = dor_allocator;
+
+//3d mappings
+elevator_mapping_coords = {0,0,2,0,2,0,1,1,0,1,2,1,0,1,2,1,0,2};
+vertical_topology = mesh;  
+enable_shadow_registers = 1;
+shadow_register_depth = 4;
+unitorus_debug = 0;
+
+//Traffic - will be modified by script
+traffic = bit_complement;
+injection_rate = 0.15;
+
+//Packet and Flit
+packet_size = 1;
+
+//Simulation Control
+sim_count = 1;
+sim_type = latency;
+warmup_periods = 0;
+// sample_period = 20;
+// max_samples = 100;
+print_activity = 0;

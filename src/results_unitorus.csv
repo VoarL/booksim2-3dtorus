@@ -1,0 +1,2 @@
+Traffic,InjectionRate,Size,VCs,VerticalTopology,AvgLatency,Throughput
+uniform,0.01,"16,16,3",8,mesh,110.854,0.00996267

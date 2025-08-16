@@ -90,7 +90,8 @@ int gNodes;
 vector<int> gDimSizes;
 vector<float> gDimPenalties;
 vector<int> gDimBandwidths;
-
+vector<vector<int>> gElevatorMapping;
+string gVerticalTopology;
 //generate nocviewer trace
 bool gTrace;
 
@@ -129,9 +130,7 @@ bool Simulate( BookSimConfig const & config )
   struct timeval start_time, end_time; /* Time before/after user code */
   total_time = 0.0;
   gettimeofday(&start_time, NULL);
-
   bool result = trafficManager->Run() ;
-
 
   gettimeofday(&end_time, NULL);
   total_time = ((double)(end_time.tv_sec) + (double)(end_time.tv_usec)/1000000.0)
