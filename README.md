@@ -20,6 +20,14 @@ O
 ```
 Where the uppercase letters represent elevators, and the lowercase letters map represent non-elevator switches that map to the elevator with that corresponding letter. Feel free to hotswap the mapping function in `user_mapper_function.py`. More details about how to do that in the file.
 
+Network Details
+===============
+The current implementation uses a DOR router and a {Unidirectional Torus or Bidirectional Mesh}. Here are visualizations of the individual nodes (with elevator and without) for a Unidirectional Mesh:
+![alt text](https://github.com/VoarL/booksim2-3dtorus/blob/master/img/drawing-nodes.png "Nodes")
+These can be combined into 2D layers of our network, where some of the nodes will have elevators. Here is an example of a layer with elevators across the diagonal:
+![alt text](https://github.com/VoarL/booksim2-3dtorus/blob/master/img/drawing-torus-elev.png "2D layer")
+Finally, the 2D layers can be combined into a 3D structure:
+![alt text](https://github.com/VoarL/booksim2-3dtorus/blob/master/img/drawing-torus-elev-stack.png "3D network")
 
 
 
