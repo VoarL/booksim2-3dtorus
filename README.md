@@ -20,6 +20,10 @@ O
 ```
 Where the uppercase letters represent elevators, and the lowercase letters map represent non-elevator switches that map to the elevator with that corresponding letter. Feel free to hotswap the mapping function in `user_mapper_function.py`. More details about how to do that in the file.
 
+
+
+
+
 This repo is a fork of [booksim2](https://github.com/booksim/booksim2). See the README for that below. 
 
 BookSim Interconnection Network Simulator
