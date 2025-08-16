@@ -4,9 +4,9 @@ Python Elevator Location Generation
 =========================================
 To generate elevator locations into a booksim config file:
 - Edit the sample_elevators.csv file, or create your own csv and put elevators in your desired coordinates
-- run "python3 map.py <name of aforementioned CSV file> <name of booksim config file for results to be written to> <X width> <Y width>
+- run `python3 map.py <name of aforementioned CSV file> <name of booksim config file for results to be written to> <X width> <Y width>`
 
-As a test, you should be able to run python3 map.py sample_elevators.csv <name of arbritrary text file here> 8 8, with the existing values in sample_elevators.csv, and it should print out this visual diagram:
+As a test, you should be able to run `python3 map.py sample_elevators.csv <name of arbritrary text file here> 8 8` from `utils/elevator`, with the existing values in `utils/elevator/sample_elevators.csv`, and it should print out this visual diagram:
 ```
 O
  Abcdeaaa
@@ -18,7 +18,7 @@ O
  abcgggGh
  abcdhhhH
 ```
-Where the uppercase letters represent elevators, and the lowercase letters map represent non-elevator switches that map to the elevator with that corresponding letter. Feel free to hotswap the mapping function in user_mapper_function.py
+Where the uppercase letters represent elevators, and the lowercase letters map represent non-elevator switches that map to the elevator with that corresponding letter. Feel free to hotswap the mapping function in `user_mapper_function.py`. More details about how to do that in the file.
 
 This repo is a fork of [booksim2](https://github.com/booksim/booksim2). See the README for that below. 
 
