@@ -23,6 +23,7 @@ Where the uppercase letters represent elevators, and the lowercase letters map r
 
 To run booksim, and use our test script which defines VC, topology, router, etc.
 ```
+pip install pandas matplotlib numpy
 cd src/
 make clean
 make
