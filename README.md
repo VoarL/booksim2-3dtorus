@@ -30,7 +30,7 @@ make
 ./booksim examples/unitorus_3d_test_2
 #run our sweep and get throughput/latency ressults, configurations addjustable in sweep
 chmod +x sweep_unitorus.sh
-./sweep_unitorus
+./sweep_unitorus.sh
 #generate graphs:
 python3 plot.py
 ```
